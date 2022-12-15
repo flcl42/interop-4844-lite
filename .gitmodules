@@ -1,0 +1,8 @@
+[submodule "geth"]
+	path = geth
+	url = ./geth
+	branch = eip-4844
+[submodule "prysm"]
+	path = prysm
+	url = ./prysm
+	branch = eip4844
