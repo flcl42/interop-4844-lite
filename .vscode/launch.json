@@ -4,12 +4,30 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
+        
         {
-            "name": "Attach to Process",
+            "name": "Launch file",
             "type": "go",
-            "request": "attach",
-            "mode": "local",
-            "processId": 0
+            "request": "launch",
+            "mode": "debug",
+            "program": "geth/cmd/geth",
+            "args": [
+                "--http",
+                "--datadir=/home/dev/interop-4844-lite/geth-data",
+                "--nodiscover",
+                "--syncmode=full",
+                "--allow-insecure-unlock",
+                "--mine",
+                "--verbosity",
+                "5",
+                "--unlock",
+                "0x123463a4b065722e99115d6c222f267d9cabb524",
+                "--nodekeyhex=fad2709d0bb03bf0e8ba3c99bea194575d3e98863133d1af638ed056d1d59345",
+                "--password",
+                "/home/dev/interop-4844-lite/very_secret_password.txt",
+                "--authrpc.jwtsecret=/home/dev/interop-4844-lite/jwtsecret.txt"
+            ]
         }
     ]
 }

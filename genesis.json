@@ -19,8 +19,8 @@
 		"terminalBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
 		"arrowGlacierBlock": 0,
 		"grayGlacierBlock": 0,
-        "shanghaiTime":1671091865,
-        "shardingForkTime":1671091881,
+        "shanghaiTime":1671314067,
+        "shardingForkTime":1671314083,
 		"clique": {
 			"period": 3,
 			"epoch": 30000

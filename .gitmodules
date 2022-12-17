@@ -1,8 +1,8 @@
 [submodule "geth"]
 	path = geth
-	url = ./geth
+	url = https://github.com/mdehoog/go-ethereum.git
 	branch = eip-4844
 [submodule "prysm"]
 	path = prysm
-	url = ./prysm
+	url = https://github.com/prysmaticlabs/prysm.git
 	branch = eip4844
