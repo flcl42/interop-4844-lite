@@ -1,20 +1,23 @@
-# Ids and settings
-chainid is 32382
+# EIP-4844 Devnetv3 mini setup
 
-networkid is 1
+Based on [Prysm x Geth EIP4844 Interop (h/t @terencechain)](https://hackmd.io/XEPQlOPESESeJpiuudK-1g)
 
-geth is enode://2a776ec66730fc7598b6875e8eaf3b781a2b62a8b8d7427dd0d2b71dcfbe8da5cb9c5f7f67905ffc2f2aa67d03cd5d877ddfcd38fba3b7f03546ce51d6daa6c4@127.0.0.1:30303?discport=0
+## Ids and settings
 
-SECONDS_PER_SLOT: 4
+- chainid is 32382
+- networkid is 1
+- geth is enode://2a776ec66730fc7598b6875e8eaf3b781a2b62a8b8d7427dd0d2b71dcfbe8da5cb9c5f7f67905ffc2f2aa67d03cd5d877ddfcd38fba3b7f03546ce51d6daa6c4@127.0.0.1:30303?discport=0
 
-SLOTS_PER_EPOCH: 4
+The settings differ from the hackmd source
+- SECONDS_PER_SLOT: 4
+- SLOTS_PER_EPOCH: 4
+- "clique.period": 3,
 
-"clique.period": 3,
+## Requires
 
-# Requires
 bazel sed curl
 
-# How to run
+## How to run
 
 The script resets on restart and kills all geth/beacon/validator!
 To run or restart from scratch:
@@ -36,7 +39,7 @@ To run an additional execution client (like Nethermind):
 
 It runs to 0x9 block, waits a bit and merges
 
-# Send blobs
+## Send blobs
 To send blobs - use upload/main.go from the interop repo, go.mod with patch
 ```
 diff --git a/go.mod b/go.mod
