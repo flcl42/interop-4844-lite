@@ -6,3 +6,7 @@
 	path = prysm
 	url = https://github.com/prysmaticlabs/prysm.git
 	branch = eip4844
+[submodule "nethermind"]
+	path = nethermind
+	url = https://github.com/NethermindEth/Nethermind
+	branch = feature/eip-4844
