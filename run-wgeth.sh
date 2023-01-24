@@ -6,26 +6,29 @@ PATH_TO_CONFIG=$PWD
 echo $PATH_TO_CONFIG
 PATH_TO_DATADIR=$PATH_TO_CONFIG/prysm-data
 PATH_TO_DATADIR2=$PATH_TO_CONFIG/prysm-data2
-PATH_TO_NETH=$PATH_TO_CONFIG/nethermind-data
-rm -rf $PATH_TO_DATADIR $PATH_TO_DATADIR2 $PATH_TO_NETH
-mkdir $PATH_TO_NETH
-mkdir $PATH_TO_NETH/keystore
+PATH_TO_GETH=$PATH_TO_CONFIG/geth-data
+rm -rf $PATH_TO_DATADIR $PATH_TO_DATADIR2 $PATH_TO_GETH
+mkdir $PATH_TO_GETH
+mkdir $PATH_TO_GETH/keystore
 mkdir $PATH_TO_DATADIR
 mkdir $PATH_TO_DATADIR2
 echo '{"address":"123463a4b065722e99115d6c222f267d9cabb524","crypto":{"cipher":"aes-128-ctr","ciphertext":"93b90389b855889b9f91c89fd15b9bd2ae95b06fe8e2314009fc88859fc6fde9","cipherparams":{"iv":"9dc2eff7967505f0e6a40264d1511742"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"c07503bb1b66083c37527cd8f06f8c7c1443d4c724767f625743bd47ae6179a4"},"mac":"6d359be5d6c432d5bbb859484009a4bf1bd71b76e89420c380bd0593ce25a817"},"id":"622df904-0bb1-4236-b254-f1b8dfdff1ec","version":3}' > $PATH_TO_GETH/keystore/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524
 
-GENESIS=$(($(date +%s) + 60)) 
-SHANGHAI=$(($GENESIS + 3*32)) # +1 EPOCH
-CANCUN=$(($SHANGHAI + 3*32))  # +1 EPOCH
+GENESIS=$(($(date +%s) + 60)) # 120s until genesis, feel free to increase this to give you more time to everything
+# The following are configureable too but you have to make sure they align.
+# Take SECONDS_PER_SLOT * SLOTS_PER_EPOCH * CAPELLA_FORK_EPOCH for SHANGHAI
+# Take SECONDS_PER_SLOT * SLOTS_PER_EPOCH * EIP4844_FORK_EPOCH for CANCUN
+SHANGHAI=$(($GENESIS + 4*4*4))
+CANCUN=$(($GENESIS + 4*4*5))
+sed -i -e 's/"shanghaiTime":[^,]*,/\"shanghaiTime\":'$SHANGHAI',/' $PATH_TO_CONFIG/genesis.json
+sed -i -e 's/"shardingForkTime":[^,]*,/\"shardingForkTime\":'$CANCUN',/' $PATH_TO_CONFIG/genesis.json
 
 # REPLACE IN GENESIS CONFIG
-sed -i -e 's/"timestamp":[^,]*,/\"timestamp\":'$GENESIS',/' 								   $PATH_TO_CONFIG/chainspec.json
-sed -i -e 's/"eip4895TransitionTimestamp":[^,]*,/\"eip4895TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/chainspec.json
-sed -i -e 's/"eip3855TransitionTimestamp":[^,]*,/\"eip3855TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/chainspec.json
-sed -i -e 's/"eip3651TransitionTimestamp":[^,]*,/\"eip3651TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/chainspec.json
-sed -i -e 's/"eip3860TransitionTimestamp":[^,]*,/\"eip3860TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/chainspec.json
-sed -i -e 's/"eip4844TransitionTimestamp":[^,]*,/\"eip4844TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/chainspec.json
-sed -i -e 's/MIN_GENESIS_TIME: .*/MIN_GENESIS_TIME: '$GENESIS $PATH_TO_CONFIG/config.yaml
+sed -i -e 's/"eip4895TransitionTimestamp":[^,]*,/\"eip4895TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/spec.json
+sed -i -e 's/"eip3855TransitionTimestamp":[^,]*,/\"eip4895TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/spec.json
+sed -i -e 's/"eip3651TransitionTimestamp":[^,]*,/\"eip4895TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/spec.json
+sed -i -e 's/"eip3860TransitionTimestamp":[^,]*,/\"eip4895TransitionTimestamp\":'$SHANGHAI',/' $PATH_TO_CONFIG/spec.json
+sed -i -e 's/"eip4844TransitionTimestamp":[^,]*,/\"eip4844TransitionTimestamp\":'$CANCUN',/' $PATH_TO_CONFIG/spec.json
 ELPORT=8551
 
 
@@ -71,31 +74,21 @@ bazel run //cmd/validator -- \
 	--interop-start-index=0 \
 	--chain-config-file=$PATH_TO_CONFIG/config.yml > $PATH_TO_CONFIG/validator.log 2>&1 &
 
+cd $PATH_TO_CONFIG/geth
+./build/bin/geth --datadir $PATH_TO_GETH init $PATH_TO_CONFIG/genesis.json
 
-cd $PATH_TO_CONFIG/nethermind/src/Nethermind
+sleep 3 && ./build/bin/geth --http \
+	--datadir=$PATH_TO_GETH \
+	--nodiscover \
+	--syncmode=full \
+	--allow-insecure-unlock \
+	--mine \
+	--nodekeyhex=1337beef1337beef1337beef1337beef1337beef1337beef1337beef1337beef \
+	--verbosity 5\
+	--unlock 0x123463a4b065722e99115d6c222f267d9cabb524 --password $PATH_TO_CONFIG/very_secret_password.txt \
+    --authrpc.jwtsecret=$PATH_TO_CONFIG/jwtsecret.txt > $PATH_TO_CONFIG/geth.log 2>&1 &
 
-dotnet run --project Nethermind.Runner/Nethermind.Runner.csproj -- \
-  --config none.cfg
-  --Init.DiagnosticMode="MemDb" \
-  --Init.ChainSpecPath="$PATH_TO_CONFIG/chainspec.json" \
-  --Init.WebSocketsEnabled=true \
-  --JsonRpc.Enabled=true \
-  --JsonRpc.EnabledModules="net,eth,consensus,subscribe,web3,admin,txpool,debug,trace" \
-  --JsonRpc.EngineEnabledModules="net,eth,consensus,subscribe,web3,admin,txpool,debug,trace" \
-  --JsonRpc.Port=8545 \
-  --JsonRpc.WebSocketsPort=8546 \
-  --JsonRpc.EnginePort=8551 \
-  --JsonRpc.Host=0.0.0.0 \
-  --JsonRpc.EngineHost=0.0.0.0 \
-  --Network.DiscoveryPort=30303 \
-  --Network.P2PPort=30303 \
-  --Merge.SecondsPerSlot=3 \
-  --Init.IsMining=true \
-  --Sync.FastSync=false \
-  --Sync.SnapSync=false \
-  --JsonRpc.MaxBatchSize=1000 \
-  --JsonRpc.MaxBatchResponseBodySize=1000000000 \
-  --JsonRpc.JwtSecretFile="$PATH_TO_CONFIG/jwtsecret.txt"
 
+cd $PATH_TO_CONFIG/nethermind
 
 

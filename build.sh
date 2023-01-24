@@ -7,3 +7,6 @@ cd ../
 cd geth
 make geth
 cd ../
+cd nethermind/src/Nethermind
+dotnet build Nethermind.sln
+cd ../../../
